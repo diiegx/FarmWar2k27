@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeMMO Dashboard - Meta 300M</title>
+    <title>PokeMMO Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
     <div class="container">
         <header>
             <h1><i class="fa-solid fa-coins"></i> PokeMMO Master Dashboard</h1>
-            <p>Control de farmeo a doble cuenta | Meta: 300M (Partiendo de 40M base)</p>
+            <p>Control de farmeo</p>
         </header>
 
         <div class="stats-grid">
@@ -48,7 +48,7 @@
 
         <div class="main-layout">
             <div class="card">
-                <h2><i class="fa-solid fa-calendar-week"></i> Calendario Interactivo por Semana</h2>
+                <h2><i class="fa-solid fa-calendar-week"></i> Calendario Interactivo Semanal</h2>
                 
                 <div class="week-nav">
                     <button id="prev-week-btn" onclick="changeWeek(-1)"><i class="fa-solid fa-chevron-left"></i> Semana Anterior</button>
@@ -60,7 +60,7 @@
             </div>
 
             <div class="card">
-                <h2><i class="fa-solid fa-receipt"></i> Registro de Gastos Diarios</h2>
+                <h2><i class="fa-solid fa-receipt"></i> Registro de Gastos</h2>
                 <div class="expense-form">
                     <input type="text" id="expense-desc" placeholder="Concepto (ej. Pociones, Amuletos...)">
                     <input type="number" id="expense-amount" placeholder="Monto ($)">
@@ -71,7 +71,7 @@
         </div>
 
         <div class="chart-card">
-            <h2><i class="fa-solid fa-chart-line"></i> Proyección de Crecimiento del Capital Real</h2>
+            <h2><i class="fa-solid fa-chart-line"></i> Proyección de Crecimiento del Capital</h2>
             <div style="position: relative; height: 320px; width: 100%;">
                 <canvas id="growthChart"></canvas>
             </div>
