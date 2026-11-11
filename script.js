@@ -132,9 +132,10 @@ function renderExpenses() {
     });
 }
 
-// Account Cooldown Management
+// Account Cooldown Management & Drag and Drop
 const COOLDOWN_HOURS = 18;
 const COOLDOWN_MS = COOLDOWN_HOURS * 60 * 60 * 1000;
+let draggedCardId = null;
 
 function addAccount() {
     const nameInput = document.getElementById('account-name');
@@ -180,11 +181,60 @@ function renderAccounts() {
     accounts.forEach(acc => {
         const card = document.createElement('div');
         card.className = 'account-card';
+        card.setAttribute('draggable', 'true');
+        card.setAttribute('data-id', acc.id);
         card.id = `acc-card-${acc.id}`;
         
+        // Drag and Drop listeners
+        card.addEventListener('dragstart', (e) => {
+            draggedCardId = acc.id.toString();
+            card.style.opacity = '0.4';
+        });
+
+        card.addEventListener('dragend', (e) => {
+            card.style.opacity = '1';
+            draggedCardId = null;
+            document.querySelectorAll('.account-card').forEach(c => c.classList.remove('drag-over'));
+        });
+
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        card.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            if (acc.id.toString() !== draggedCardId) {
+                card.classList.add('drag-over');
+            }
+        });
+
+        card.addEventListener('dragleave', (e) => {
+            card.classList.remove('drag-over');
+        });
+
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            card.classList.remove('drag-over');
+            const targetId = acc.id.toString();
+            if (draggedCardId && targetId && draggedCardId !== targetId) {
+                reorderAccounts(draggedCardId, targetId);
+            }
+        });
+
         gridEl.appendChild(card);
     });
     updateAccountTimers();
+}
+
+function reorderAccounts(sourceId, targetId) {
+    const sourceIdx = accounts.findIndex(a => a.id.toString() === sourceId);
+    const targetIdx = accounts.findIndex(a => a.id.toString() === targetId);
+    
+    if (sourceIdx !== -1 && targetIdx !== -1) {
+        const [movedItem] = accounts.splice(sourceIdx, 1);
+        accounts.splice(targetIdx, 0, movedItem);
+        renderAccounts();
+    }
 }
 
 function updateAccountTimers() {
@@ -223,7 +273,7 @@ function updateAccountTimers() {
 
         card.innerHTML = `
             <div class="account-header">
-                <span class="account-title"><i class="fa-solid fa-user-gear"></i> ${acc.name}</span>
+                <span class="account-title"><i class="fa-solid fa-grip-vertical drag-handle" title="Arrastrar para ordenar"></i> <i class="fa-solid fa-user-gear"></i> ${acc.name}</span>
                 <button class="account-delete" onclick="deleteAccount(${acc.id})"><i class="fa-solid fa-trash"></i></button>
             </div>
             <div class="account-status">${statusText}</div>
