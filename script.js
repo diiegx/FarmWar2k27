@@ -1,0 +1,206 @@
+const startDate = new Date(2026, 10, 13);
+const endDate = new Date(2027, 5, 1);
+const initialCapital = 40000000;
+const targetCapital = 300000000;
+const dailyNetProfit = 2063832;
+
+let days = [];
+let curr = new Date(startDate);
+let dayIndex = 0;
+while (curr <= endDate) {
+    days.push({
+        id: dayIndex++,
+        date: new Date(curr),
+        completed: false
+    });
+    curr.setDate(curr.getDate() + 1);
+}
+
+let expenses = [];
+let currentWeekIndex = 0;
+let weeks = [];
+for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+}
+
+const weekdaysEs = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+const ctx = document.getElementById('growthChart').getContext('2d');
+const growthChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Capital Real Acumulado ($)',
+            data: [],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.2,
+            pointRadius: 0,
+            pointHoverRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#9ca3af', maxTicksLimit: 10 }
+            },
+            y: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { 
+                    color: '#9ca3af',
+                    callback: function(value) { return '$' + (value / 1000000).toFixed(0) + 'M'; }
+                }
+            }
+        }
+    }
+});
+
+function formatMoney(amount) {
+    return '$' + amount.toLocaleString('en-US');
+}
+
+function changeWeek(direction) {
+    currentWeekIndex += direction;
+    if (currentWeekIndex < 0) currentWeekIndex = 0;
+    if (currentWeekIndex >= weeks.length) currentWeekIndex = weeks.length - 1;
+    renderWeek();
+}
+
+function toggleDay(globalId) {
+    const day = days.find(d => d.id === globalId);
+    if (day) {
+        day.completed = !day.completed;
+        if (day.completed) {
+            confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+        }
+        updateDashboard();
+        renderWeek();
+    }
+}
+
+function addExpense() {
+    const descInput = document.getElementById('expense-desc');
+    const amountInput = document.getElementById('expense-amount');
+    const desc = descInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+
+    if (!desc || isNaN(amount) || amount <= 0) {
+        alert('Por favor introduce un concepto y un monto válido.');
+        return;
+    }
+
+    expenses.push({ id: Date.now(), desc, amount });
+    descInput.value = '';
+    amountInput.value = '';
+
+    updateDashboard();
+    renderExpenses();
+}
+
+function deleteExpense(id) {
+    expenses = expenses.filter(e => e.id !== id);
+    updateDashboard();
+    renderExpenses();
+}
+
+function renderExpenses() {
+    const listEl = document.getElementById('expense-list');
+    listEl.innerHTML = '';
+    if (expenses.length === 0) {
+        listEl.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem; font-size: 0.9rem;">No hay gastos registrados.</div>';
+        return;
+    }
+    expenses.forEach(exp => {
+        const item = document.createElement('div');
+        item.className = 'expense-item';
+        item.innerHTML = `
+            <span class="desc">${exp.desc}</span>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span class="amount">-${formatMoney(exp.amount)}</span>
+                <button class="delete-btn" onclick="deleteExpense(${exp.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `;
+        listEl.appendChild(item);
+    });
+}
+
+function renderWeek() {
+    const weekDays = weeks[currentWeekIndex];
+    const container = document.getElementById('week-days-container');
+    container.innerHTML = '';
+
+    const startDateStr = weekDays[0].date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    const endDateStr = weekDays[weekDays.length - 1].date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    document.getElementById('week-title-display').textContent = `Semana ${currentWeekIndex + 1} (${startDateStr} - ${endDateStr})`;
+
+    document.getElementById('prev-week-btn').disabled = currentWeekIndex === 0;
+    document.getElementById('next-week-btn').disabled = currentWeekIndex === weeks.length - 1;
+
+    weekDays.forEach(day => {
+        let jsDay = day.date.getDay();
+        let esDayIndex = jsDay === 0 ? 6 : jsDay - 1;
+        let dayName = weekdaysEs[esDayIndex];
+        let dateFormatted = day.date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        const row = document.createElement('div');
+        row.className = 'day-row';
+        row.innerHTML = `
+            <div class="day-info">
+                <span class="day-name">${dayName}</span>
+                <span class="day-date">${dateFormatted}</span>
+            </div>
+            <div class="day-actions">
+                <span class="day-profit">${day.completed ? '+ ' + formatMoney(dailyNetProfit) : '$0'}</span>
+                <button class="toggle-btn ${day.completed ? 'completed' : ''}" onclick="toggleDay(${day.id})">
+                    ${day.completed ? '<i class="fa-solid fa-check"></i> SÍ' : 'NO'}
+                </button>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function updateDashboard() {
+    const completedDaysCount = days.filter(d => d.completed).length;
+    const totalFarmProfit = completedDaysCount * dailyNetProfit;
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const currentCapital = initialCapital + totalFarmProfit - totalExpenses;
+    
+    let progressPct = (currentCapital / targetCapital) * 100;
+    if (progressPct > 100) progressPct = 100;
+    if (progressPct < 0) progressPct = 0;
+
+    document.getElementById('stat-capital').textContent = formatMoney(currentCapital);
+    document.getElementById('stat-farm-profit').textContent = formatMoney(totalFarmProfit);
+    document.getElementById('stat-expenses').textContent = formatMoney(totalExpenses);
+    document.getElementById('stat-progress').textContent = progressPct.toFixed(1) + '%';
+
+    document.getElementById('progress-text').textContent = progressPct.toFixed(1) + '% Completado';
+    document.getElementById('progress-fill').style.width = progressPct + '%';
+
+    let runningCapital = initialCapital;
+    let chartLabels = [];
+    let chartData = [];
+
+    days.forEach((day) => {
+        let dayProfit = day.completed ? dailyNetProfit : 0;
+        runningCapital += dayProfit;
+        chartLabels.push(day.date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }));
+        chartData.push(runningCapital);
+    });
+
+    growthChart.data.labels = chartLabels;
+    growthChart.data.datasets[0].data = chartData;
+    growthChart.update();
+}
+
+renderWeek();
+renderExpenses();
+updateDashboard();
